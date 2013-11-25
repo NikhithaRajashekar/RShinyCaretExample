@@ -1,21 +1,32 @@
-library(shiny);
+require(shiny);
+require(shinyIncubator);
 
 shinyUI(pageWithSidebar(
   headerPanel("Caret R Shiny Example"),
   sidebarPanel(fileInput('rawInputFile','Upload Data File',accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
+               
+               uiOutput("labelSelectUI"),
+               
                checkboxInput('headerUI','Header',TRUE),
                radioButtons('sepUI','Seperator',c(Comma=',',Semicolon=';',Tab='\t'),'Comma'),
-               radioButtons('quoteUI','Quote',c(None='','Double Quote'='"','Single Quote'="'"),'Double Quote')
+               radioButtons('quoteUI','Quote',c(None='','Double Quote'='"','Single Quote'="'"),'Double Quote'),
+               uiOutput("dummyTagUI")
     ),
-   mainPanel(
+   mainPanel(progressInit(),
      tabsetPanel(
-       tabPanel("modelSelectionUI",radioButtons("crossFoldTypeUI","Cross Validation Type",c('No CV'=0,"K-Fold CV"=1,"Repeated KFold CV"=2),"K-Fold CV"),
+       tabPanel("Model Selection Tab",radioButtons("crossFoldTypeUI","Cross Validation Type",c("K-Fold CV"='cv',"Repeated KFold CV"="repeatedcv"),"K-Fold CV"),
+                                  numericInput("foldsUI","Number of Folds(k)",5),
+                                  conditionalPanel(condition="input.crossFoldTypeUI == repeatedcv",numericInput("repeatUI","Number of Repeats",5)),
                                   uiOutput("CVTypeUI"),
-                                  radioButtons("preprocessingUI","Pre-processing Type",c('No Preprocessing'=0,'PCA'=1,'ICA'=2),'No Preprocessing'),
+                                  radioButtons("preprocessingUI","Pre-processing Type",c('No Preprocessing'="",'PCA'="pca",'ICA'="ica"),'No Preprocessing'),
                                   uiOutput("ppUI"),
-                                  selectInput("modelSelectionUI",
-                                              c("Generalized Linear Model"="lm","Elastic Net"="en","Neural Network"="nn",
-                                                "Random Forest"="rf","Support Vector Machine"="svm"),"Generalied Linear Model"),
-                                  uiOutput("modelUI"),
-                                  uiOutput("labelSelectUI")),
-       tabPanel("Data View",uiOutput("dataSelectorUI"),dataTableOutput("rawDataView"))))))
+                                  selectInput("modelSelectionUI","Select Model",
+                                              c('Elastic Net'="en",'Neural Network'="nn",
+                                                'Random Forest'="rf"),"Elastic Net"),
+                                  uiOutput("modelParametersUI"),
+                                  tags$hr(),
+                                  actionButton("runAnalysisUI","Run Analysis")),
+       tabPanel("Model Results View",h4("Best Fit Model"),tableOutput("bestResultsUI"),h4("Full Model Output"),tableOutput("trainResultsUI"),plotOutput("finalPlotUI")),
+       tabPanel("Data Table View",dataTableOutput("rawDataView")),
+       tabPanel("Caret Feature View",plotOutput("caretPlotUI"))
+       ,id="mainTabUI"))))
